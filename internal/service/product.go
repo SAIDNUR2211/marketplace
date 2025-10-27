@@ -1,15 +1,15 @@
 package service
 
 import (
-	"context" // НОВЫЙ ИМПОРТ
+	"context"
 	"errors"
-	"fmt" // НОВЫЙ ИМПОРТ
+	"fmt"
 	"marketplace/internal/errs"
 	"marketplace/internal/models/domain"
 	"marketplace/utils"
-	"time" // НОВЫЙ ИМПОРТ
+	"time"
 
-	"github.com/go-redis/redis/v8" // НОВЫЙ ИМПОРТ
+	"github.com/go-redis/redis/v8"
 )
 
 func (s *Service) CreateProduct(product *domain.Product) error {
@@ -45,30 +45,18 @@ func (s *Service) GetProductByID(id int64) (*domain.Product, error) {
 	if id <= 0 {
 		return nil, errs.ErrInvalidProductID
 	}
-
-	// --- НОВАЯ ЛОГИКА КЕШИРОВАНИЯ ---
 	ctx := context.Background()
-	// 1. Формируем ключ для Redis
 	cacheKey := fmt.Sprintf("product:%d", id)
-
-	// 2. Пытаемся достать из Redis
 	cachedProduct, err := s.cache.GetProduct(ctx, cacheKey)
 	if err == nil {
-		// 2a. Cache Hit (Нашли в кеше)
 		s.logger.Info().Int64("id", id).Msg("cache hit: product found in redis")
 		return cachedProduct, nil
 	}
-
-	// 2b. Если ошибка - это НЕ "не найдено", значит Redis упал.
 	if !errors.Is(err, redis.Nil) {
 		s.logger.Error().Err(err).Int64("id", id).Msg("redis error on get product")
-		// (Мы не останавливаемся, а просто идем в БД, как будто кеша нет)
 	} else {
-		// 2c. Cache Miss (Не нашли в кеше)
 		s.logger.Info().Int64("id", id).Msg("cache miss: product not found in redis")
 	}
-
-	// 3. Идем в базу данных (PostgreSQL)
 	product, err := s.repository.GetProductByID(id)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to get product by id from db")
@@ -77,9 +65,6 @@ func (s *Service) GetProductByID(id int64) (*domain.Product, error) {
 		}
 		return nil, err
 	}
-
-	// 4. Сохраняем в кеш ДЛЯ СЛЕДУЮЩЕГО РАЗА.
-	// Мы делаем это в горутине, чтобы пользователь не ждал ответа от Redis.
 	go func() {
 		s.logger.Info().Int64("id", id).Msg("caching: setting product to redis")
 		err := s.cache.SetProduct(context.Background(), cacheKey, product, time.Hour*1) // Кеш на 1 час
@@ -87,8 +72,6 @@ func (s *Service) GetProductByID(id int64) (*domain.Product, error) {
 			s.logger.Error().Err(err).Int64("id", id).Msg("caching failed: could not set product to redis")
 		}
 	}()
-	// --- КОНЕЦ ЛОГИКИ КЕШИРОВАНИЯ ---
-
 	return product, nil
 }
 
@@ -97,7 +80,6 @@ func (s *Service) UpdateProduct(product *domain.Product, userID int, userRole st
 	if product == nil || product.ID <= 0 {
 		return errs.ErrInvalidProductID
 	}
-
 	existingProduct, err := s.repository.GetProductByID(product.ID)
 	if err != nil {
 		return err
@@ -106,27 +88,20 @@ func (s *Service) UpdateProduct(product *domain.Product, userID int, userRole st
 	if err != nil {
 		return err
 	}
-
 	if userRole != domain.AdminRole && shop.OwnerID != int64(userID) {
 		return errors.New("permission denied: you are not the owner of this product's shop")
 	}
-
 	if product.Name != "" && len(product.Name) < 4 {
 		return errs.ErrInvalidProductName
 	}
 	if product.Price < 0 {
 		return errs.ErrInvalidFieldValue
 	}
-
 	product.UpdatedAt = time.Now()
 	if err := s.repository.UpdateProduct(product); err != nil {
 		s.logger.Error().Err(err).Msg("failed to update product")
 		return err
 	}
-
-	// --- НОВЫЙ КОД: ИНВАЛИДАЦИЯ КЕША ---
-	// Мы обновили товар, значит старая запись в кеше неверна.
-	// Удаляем ее. В горутине, чтобы не блокировать.
 	go func() {
 		cacheKey := fmt.Sprintf("product:%d", product.ID)
 		s.logger.Info().Int64("id", product.ID).Msg("cache invalidation: deleting product from redis")
@@ -134,8 +109,6 @@ func (s *Service) UpdateProduct(product *domain.Product, userID int, userRole st
 			s.logger.Error().Err(err).Int64("id", product.ID).Msg("cache invalidation failed")
 		}
 	}()
-	// --- КОНЕЦ ---
-
 	s.logger.Info().Int64("id", product.ID).Msg("product updated successfully")
 	return nil
 }
@@ -145,7 +118,6 @@ func (s *Service) DeleteProduct(id int64, userID int, userRole string) error {
 	if id <= 0 {
 		return errs.ErrInvalidProductID
 	}
-
 	existingProduct, err := s.repository.GetProductByID(id)
 	if err != nil {
 		return err
@@ -154,18 +126,13 @@ func (s *Service) DeleteProduct(id int64, userID int, userRole string) error {
 	if err != nil {
 		return err
 	}
-
 	if userRole != domain.AdminRole && shop.OwnerID != int64(userID) {
 		return errors.New("permission denied: you are not the owner of this product's shop")
 	}
-
 	if err := s.repository.DeleteProduct(id); err != nil {
 		s.logger.Error().Err(err).Msg("failed to delete product")
 		return err
 	}
-
-	// --- НОВЫЙ КОД: ИНВАЛИДАЦИЯ КЕША ---
-	// Товар удален (soft delete), удаляем его из кеша.
 	go func() {
 		cacheKey := fmt.Sprintf("product:%d", id)
 		s.logger.Info().Int64("id", id).Msg("cache invalidation: deleting product from redis")
@@ -173,8 +140,6 @@ func (s *Service) DeleteProduct(id int64, userID int, userRole string) error {
 			s.logger.Error().Err(err).Int64("id", id).Msg("cache invalidation failed")
 		}
 	}()
-	// --- КОНЕЦ ---
-
 	s.logger.Info().Int64("id", id).Msg("product soft deleted successfully")
 	return nil
 }

@@ -50,7 +50,7 @@ func (ctrl *Controller) handleError(c *gin.Context, err error) {
 // @Router /ping [get]
 func (ctrl *Controller) ping(c *gin.Context) {
 	c.JSON(http.StatusOK, CommonResponse{
-		Message: "PING",
+		Message: "PONG",
 	})
 }
 

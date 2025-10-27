@@ -83,21 +83,13 @@ func (r *Repository) ListShops(ownerID int64, limit, offset int) ([]*domain.Shop
 	if offset < 0 {
 		offset = 0
 	}
-
 	var dbShops []db.Shop
-	// ИСПРАВЛЕНИЕ: правильная параметризация
-	query := `SELECT id, name, slug, owner_id, description, created_at, updated_at, deleted_at 
-              FROM shops 
-              WHERE owner_id = $1 AND deleted_at IS NULL 
-              ORDER BY created_at DESC 
-              LIMIT $2 OFFSET $3`
-
+	query := `SELECT id, name, slug, owner_id, description, created_at, updated_at, deleted_at FROM shops WHERE owner_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 	err := r.db.Select(&dbShops, query, ownerID, limit, offset)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to list shops")
 		return nil, r.translateError(err)
 	}
-
 	shops := make([]*domain.Shop, 0, len(dbShops))
 	for _, sh := range dbShops {
 		shops = append(shops, sh.ToDomain())

@@ -15,9 +15,7 @@ func (s *Service) CreateShop(shop *domain.Shop) error {
 	if shop.OwnerID <= 0 {
 		return errs.ErrInvalidFieldValue
 	}
-
 	shop.Slug = utils.GenerateSlug(shop.Name)
-
 	shop.CreatedAt = time.Now()
 	shop.UpdatedAt = time.Now()
 	if err := s.repository.CreateShop(shop); err != nil {
@@ -25,7 +23,6 @@ func (s *Service) CreateShop(shop *domain.Shop) error {
 	}
 	return nil
 }
-
 func (s *Service) GetShopByID(id int64) (*domain.Shop, error) {
 	if id <= 0 {
 		return nil, errs.ErrInvalidShopID
@@ -63,7 +60,6 @@ func (s *Service) DeleteShop(id int64, userID int, userRole string) error {
 	if id <= 0 {
 		return errs.ErrInvalidShopID
 	}
-
 	existingShop, err := s.repository.GetShopByID(id)
 	if err != nil {
 		return err

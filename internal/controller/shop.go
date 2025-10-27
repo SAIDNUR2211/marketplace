@@ -82,19 +82,16 @@ func (ctrl *Controller) UpdateShopHandler(c *gin.Context) {
 		ctrl.handleError(c, errs.ErrInvalidShopID)
 		return
 	}
-
 	userIDUntyped, _ := c.Get(userIDCtx)
 	userRoleUntyped, _ := c.Get(userRoleCtx)
 	userID := userIDUntyped.(int)
 	userRole := userRoleUntyped.(string)
-
 	var shop domain.Shop
 	if err := c.ShouldBindJSON(&shop); err != nil {
 		ctrl.handleError(c, errs.ErrInvalidRequestBody)
 		return
 	}
 	shop.ID = id
-
 	if err := ctrl.service.UpdateShop(&shop, userID, userRole); err != nil {
 		ctrl.handleError(c, err)
 		return
@@ -122,12 +119,10 @@ func (ctrl *Controller) DeleteShopHandler(c *gin.Context) {
 		ctrl.handleError(c, errs.ErrInvalidShopID)
 		return
 	}
-
 	userIDUntyped, _ := c.Get(userIDCtx)
 	userRoleUntyped, _ := c.Get(userRoleCtx)
 	userID := userIDUntyped.(int)
 	userRole := userRoleUntyped.(string)
-
 	if err := ctrl.service.DeleteShop(id, userID, userRole); err != nil {
 		ctrl.handleError(c, err)
 		return

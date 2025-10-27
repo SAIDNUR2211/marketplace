@@ -20,7 +20,6 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (r *Repository) BeginTx() (*sqlx.Tx, error) {
 	return r.db.Beginx()
 }
-
 func (r *Repository) translateError(err error) error {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

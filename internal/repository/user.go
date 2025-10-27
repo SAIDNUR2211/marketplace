@@ -12,15 +12,9 @@ import (
 
 func (repository *Repository) CreateUser(user domain.User) (err error) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("func_name", "repository.CreateUser").Logger()
-
-	_, err = repository.db.Exec(
-		`INSERT INTO users (full_name, username, email, password, phone) VALUES ($1, $2, $3, $4, $5)`,
-		user.FullName, user.Username, user.Email, user.Password, user.Phone,
-	)
-
+	_, err = repository.db.Exec(`INSERT INTO users (full_name, username, email, password, phone) VALUES ($1, $2, $3, $4, $5)`, user.FullName, user.Username, user.Email, user.Password, user.Phone)
 	if err != nil {
 		logger.Err(err).Msg("error inserting user")
-		// ИСПРАВЛЕНИЕ: добавляем проверку на нарушение уникальности
 		if strings.Contains(err.Error(), "unique constraint") {
 			if strings.Contains(err.Error(), "username") {
 				return errs.ErrUsernameAlreadyExists

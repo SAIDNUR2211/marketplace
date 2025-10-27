@@ -9,34 +9,28 @@ import (
 
 func (s *Service) CreateUser(user domain.User) (err error) {
 	user.Role = domain.UserRole
-
-	// ИСПРАВЛЕНИЕ: правильная проверка существования пользователя
 	_, err = s.repository.GetUserByUsername(user.Username)
 	if err == nil {
 		return errs.ErrUsernameAlreadyExists
 	} else if !errors.Is(err, errs.ErrNotfound) {
-		return err // Возвращаем другие ошибки (например, проблемы с БД)
+		return err
 	}
-
 	_, err = s.repository.GetUserByEmail(user.Email)
 	if err == nil {
 		return errs.ErrEmailAlreadyExists
 	} else if !errors.Is(err, errs.ErrNotfound) {
 		return err
 	}
-
 	_, err = s.repository.GetUserByPhone(user.Phone)
 	if err == nil {
 		return errs.ErrPhoneAlreadyExists
 	} else if !errors.Is(err, errs.ErrNotfound) {
 		return err
 	}
-
 	user.Password, err = utils.GenerateHash(user.Password)
 	if err != nil {
 		return err
 	}
-
 	if err = s.repository.CreateUser(user); err != nil {
 		return err
 	}
@@ -45,7 +39,6 @@ func (s *Service) CreateUser(user domain.User) (err error) {
 func (s *Service) Authenticate(user domain.User) (int, string, error) {
 	var userFromDB domain.User
 	var err error
-
 	if user.Username != "" {
 		userFromDB, err = s.repository.GetUserByUsername(user.Username)
 	} else if user.Email != "" {
@@ -59,19 +52,15 @@ func (s *Service) Authenticate(user domain.User) (int, string, error) {
 		}
 		return 0, "", err
 	}
-
 	if !utils.CheckPasswordHash(user.Password, userFromDB.Password) {
 		return 0, "", errs.ErrIncorrectUsernameOrPassword
 	}
-
 	return userFromDB.ID, userFromDB.Role, nil
 }
-
 func (s *Service) SetUserRole(actorUserID int, actorRole string, targetUserID int, newRole string) error {
 	if actorRole != domain.AdminRole {
 		return errors.New("permission denied: only admins can change user roles")
 	}
-
 	if newRole != domain.AdminRole && newRole != domain.UserRole && newRole != domain.ShopkeperRole {
 		return errs.ErrInvalidFieldValue
 	}

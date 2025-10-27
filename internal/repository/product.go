@@ -83,8 +83,6 @@ func (r *Repository) ListProducts(shopID int64, limit, offset int) ([]*domain.Pr
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().Str("func", "ListProducts").Logger()
 	var dbProducts []db.Product
-
-	// ИСПРАВЛЕНИЕ: правильная параметризация
 	query := `SELECT id, sku, name, slug, description, price, currency, quantity, shop_id, active, created_at, updated_at, deleted_at 
               FROM products 
               WHERE shop_id = $1 AND deleted_at IS NULL 
@@ -106,32 +104,24 @@ func (r *Repository) ListProducts(shopID int64, limit, offset int) ([]*domain.Pr
 }
 func (r *Repository) DecreaseProductQuantity(productID int64, quantity int) error {
 	query := `UPDATE products SET quantity = quantity - $1 WHERE id = $2 AND quantity >= $1`
-
 	result, err := r.db.Exec(query, quantity, productID)
 	if err != nil {
 		return r.translateError(err)
 	}
-
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return r.translateError(err)
 	}
-
 	if rowsAffected == 0 {
 		return errors.New("not enough stock")
 	}
-
 	return nil
 }
 func (r *Repository) GetProductByIDWithTx(tx *sqlx.Tx, id int64) (*domain.Product, error) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("func", "GetProductByIDWithTx").Logger()
 	var dbProduct db.Product
-
-	// ИЗМЕНЕНИЕ: Добавлен 'FOR UPDATE' для блокировки строки
 	query := `SELECT id, sku, name, slug, description, price, currency, quantity, shop_id, active, created_at, updated_at, deleted_at 
 	          FROM products WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`
-
-	// ИЗМЕНЕНИЕ: Используем tx.Get()
 	err := tx.Get(&dbProduct, query, id)
 	if err != nil {
 		logger.Error().Err(err).Int64("id", id).Msg("failed to get product by id with tx")
@@ -140,25 +130,18 @@ func (r *Repository) GetProductByIDWithTx(tx *sqlx.Tx, id int64) (*domain.Produc
 	return dbProduct.ToDomain(), nil
 }
 
-// DecreaseProductQuantityWithTx уменьшает кол-во товара внутри транзакции.
 func (r *Repository) DecreaseProductQuantityWithTx(tx *sqlx.Tx, productID int64, quantity int) error {
 	query := `UPDATE products SET quantity = quantity - $1 WHERE id = $2 AND quantity >= $1`
-
-	// ИЗМЕНЕНИЕ: Используем tx.Exec()
 	result, err := tx.Exec(query, quantity, productID)
 	if err != nil {
 		return r.translateError(err)
 	}
-
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return r.translateError(err)
 	}
-
 	if rowsAffected == 0 {
-		// Эта ошибка будет поймана сервисом и вызовет Rollback
 		return errors.New("not enough stock")
 	}
-
 	return nil
 }
