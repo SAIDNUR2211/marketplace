@@ -1,0 +1,820 @@
+basePath: /
+definitions:
+  internal_controller.CommonError:
+    description: Common error response
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  internal_controller.CommonResponse:
+    description: Common success response
+    properties:
+      message:
+        example: success message
+        type: string
+    type: object
+  internal_controller.SetRoleRequest:
+    properties:
+      role:
+        example: SHOPKEPER
+        type: string
+    required:
+    - role
+    type: object
+  internal_controller.SignInRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  internal_controller.SignUpRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      full_name:
+        example: John Doe
+        type: string
+      password:
+        example: password123
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  internal_controller.TokenPairResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  marketplace_internal_models_domain.CreateOrderInput:
+    description: Input for creating an order
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/marketplace_internal_models_domain.CreateOrderItemInput'
+        type: array
+      note:
+        type: string
+    type: object
+  marketplace_internal_models_domain.CreateOrderItemInput:
+    description: Input for order item
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  marketplace_internal_models_domain.Order:
+    description: Order information
+    properties:
+      created_at:
+        type: string
+      currency:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/marketplace_internal_models_domain.OrderItem'
+        type: array
+      note:
+        type: string
+      shop_id:
+        type: integer
+      status:
+        type: string
+      total:
+        type: number
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  marketplace_internal_models_domain.OrderItem:
+    description: Order item information
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      order_id:
+        type: integer
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      sku:
+        type: string
+      total_price:
+        type: number
+      unit_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  marketplace_internal_models_domain.Product:
+    description: Product information
+    properties:
+      active:
+        example: true
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        example: USD
+        type: string
+      deleted_at:
+        type: string
+      description:
+        example: Product description
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Product Name
+        type: string
+      price:
+        example: 99.99
+        type: number
+      quantity:
+        example: 10
+        type: integer
+      shop_id:
+        example: 1
+        type: integer
+      sku:
+        example: SKU123
+        type: string
+      slug:
+        example: product-name
+        type: string
+      updated_at:
+        type: string
+    type: object
+  marketplace_internal_models_domain.Shop:
+    description: Shop information
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        example: Shop description
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: My Shop
+        type: string
+      owner_id:
+        example: 123
+        type: integer
+      slug:
+        example: my-shop
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:7577
+info:
+  contact:
+    email: saidnurnasreddinzoda@gmail.com
+    name: API Support
+  description: API Сервер для маркетплейса
+  termsOfService: http://swagger.io/terms/
+  title: Marketplace API
+  version: "1.0"
+paths:
+  /api/v1/admin/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Изменяет роль пользователя (только для админов)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новая роль
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller.SetRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Изменить роль пользователя
+      tags:
+      - admin
+  /api/v1/orders:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый заказ для аутентифицированного пользователя
+      parameters:
+      - description: Данные заказа
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/marketplace_internal_models_domain.CreateOrderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Создать заказ
+      tags:
+      - orders
+  /api/v1/orders/{id}:
+    get:
+      description: Получает детали заказа по его ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Получить заказ по ID
+      tags:
+      - orders
+  /api/v1/products:
+    get:
+      description: Получает список продуктов магазина
+      parameters:
+      - description: Shop ID
+        in: query
+        name: shop_id
+        required: true
+        type: integer
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/marketplace_internal_models_domain.Product'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Список продуктов
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Создает новый продукт (только для админов и владельцев магазинов)
+      parameters:
+      - description: Данные продукта
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/marketplace_internal_models_domain.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Создать продукт
+      tags:
+      - products
+  /api/v1/products/{id}:
+    delete:
+      description: Удаляет продукт (soft delete, только для админов и владельцев магазинов)
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Удалить продукт
+      tags:
+      - products
+    get:
+      description: Получает информацию о продукте по его ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Получить продукт по ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о продукте (только для админов и владельцев
+        магазинов)
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/marketplace_internal_models_domain.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Обновить продукт
+      tags:
+      - products
+  /api/v1/shops:
+    get:
+      description: Получает список магазинов владельца
+      parameters:
+      - description: Owner ID
+        in: query
+        name: owner_id
+        required: true
+        type: integer
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Список магазинов
+      tags:
+      - shops
+    post:
+      consumes:
+      - application/json
+      description: Создает новый магазин
+      parameters:
+      - description: Данные магазина
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Создать магазин
+      tags:
+      - shops
+  /api/v1/shops/{id}:
+    delete:
+      description: Удаляет магазин (soft delete, только для админов и владельцев)
+      parameters:
+      - description: Shop ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Удалить магазин
+      tags:
+      - shops
+    get:
+      description: Получает информацию о магазине по его ID
+      parameters:
+      - description: Shop ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Получить магазин по ID
+      tags:
+      - shops
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о магазине (только для админов и владельцев)
+      parameters:
+      - description: Shop ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/marketplace_internal_models_domain.Shop'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      security:
+      - BearerAuth: []
+      summary: Обновить магазин
+      tags:
+      - shops
+  /auth/refresh:
+    get:
+      consumes:
+      - application/json
+      description: Получение новой пары access/refresh токенов
+      parameters:
+      - default: Bearer {token}
+        description: Refresh Token
+        in: header
+        name: X-Refresh-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.TokenPairResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Обновление токенов
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Аутентификация пользователя и получение токенов
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.TokenPairResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Вход в систему
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового пользователя
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_controller.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_controller.CommonError'
+      summary: Регистрация пользователя
+      tags:
+      - auth
+  /health:
+    get:
+      description: Проверка статуса сервиса
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health Check
+      tags:
+      - health
+  /ping:
+    get:
+      description: Проверка работоспособности API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.CommonResponse'
+      summary: Ping
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,23 @@
+{
+  "auth_params": {
+    "access_token_ttl_minutes": 720,
+    "refresh_token_ttl_days": 35
+  },
+  "app_params": {
+    "gin_mode": "debug", 
+    "port_run": "7577",
+    "server_url": "localhost",
+    "server_name": "SHOPSERVICE"
+  },
+  "postgres_params": {
+    "host": "localhost",
+    "port": "5432",
+    "user": "postgres",
+    "database": "shope_db"
+  },
+  "redis_params": {
+    "addr": "localhost:6379",
+    "password": "",
+    "db": 0
+  }
+}
