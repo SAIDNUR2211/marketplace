@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"marketplace/internal/models/domain"
 	"marketplace/pkg"
 	"net/http"
 
@@ -33,20 +32,7 @@ func (ctrl *Controller) checkUserAuthentication(c *gin.Context) {
 	c.Set(userRoleCtx, string(userRole))
 
 }
-func (ctrl *Controller) checkIsAdmin(c *gin.Context) {
-	role := c.GetString(userRoleCtx)
-	if role == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, CommonError{Error: "role is not in context"})
-		return
-	}
 
-	if role != domain.AdminRole {
-		c.AbortWithStatusJSON(http.StatusForbidden, CommonError{Error: "permission denied"})
-		return
-	}
-
-	c.Next()
-}
 func (ctrl *Controller) checkRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole, exists := c.Get(userRoleCtx)

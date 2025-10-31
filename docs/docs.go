@@ -1209,7 +1209,7 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string",
-                    "example": "Shop description"
+                    "example": "Shop description"S
                 },
                 "id": {
                     "type": "integer",

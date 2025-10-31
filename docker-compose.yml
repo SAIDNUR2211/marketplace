@@ -4,33 +4,23 @@ services:
     ports:
       - "7577:7577"
     environment:
-      - DB_PASSWORD=mysecretpassword
-      - JWT_SECRET=my_super_secret_jwt_key_that_is_long
-      - DOCKER_ENV=true # НОВАЯ ПЕРЕМЕННАЯ ОКРУЖЕНИЯ
+      - DB_PASSWORD=34315203
+      - JWT_SECRET=qwertyuioplkjhgfdsazxcvbnm
+      - DOCKER_ENV=true
     depends_on:
       - db
-      - redis 
-    restart: unless-stopped 
+    restart: unless-stopped  
 
   db:
     image: postgres:14-alpine
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_PASSWORD=34315203
       - POSTGRES_DB=shope_db
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-  redis_data:

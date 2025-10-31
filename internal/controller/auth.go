@@ -36,6 +36,10 @@ func (ctrl *Controller) SignUp(c *gin.Context) {
 		ctrl.handleError(c, errors.Join(errs.ErrInvalidRequestBody, err))
 		return
 	}
+	if input.Email == "" || input.Password == "" || input.Username == "" {
+		ctrl.handleError(c, errors.New("email, password and username are required"))
+		return
+	}
 	if err := ctrl.service.CreateUser(domain.User{
 		FullName: input.FullName,
 		Username: input.Username,
@@ -77,20 +81,35 @@ func (ctrl *Controller) SignIn(c *gin.Context) {
 		ctrl.handleError(c, errors.Join(errs.ErrInvalidRequestBody, err))
 		return
 	}
+
+	// Валидация - должно быть указано только одно поле
+	if (input.Username == "" && input.Email == "") || (input.Username != "" && input.Email != "") {
+		ctrl.handleError(c, errors.New("please provide either username or email for login"))
+		return
+	}
+
+	if input.Password == "" {
+		ctrl.handleError(c, errors.New("password is required"))
+		return
+	}
+
 	userID, userRole, err := ctrl.service.Authenticate(domain.User{
 		Username: input.Username,
 		Email:    input.Email,
 		Password: input.Password,
 	})
+
 	if err != nil {
 		ctrl.handleError(c, err)
 		return
 	}
+
 	accessToken, refreshToken, err := ctrl.generateNewTokenPair(userID, userRole)
 	if err != nil {
 		ctrl.handleError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, TokenPairResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,

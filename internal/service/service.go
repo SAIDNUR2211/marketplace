@@ -9,15 +9,13 @@ import (
 
 type Service struct {
 	repository contracts.RepositoryI
-	cache      contracts.CacheI
 	logger     zerolog.Logger
 }
 
-func NewService(repository contracts.RepositoryI, cache contracts.CacheI) *Service {
+func NewService(repository contracts.RepositoryI) *Service {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("entity", "service").Logger()
 	return &Service{
 		repository: repository,
-		cache:      cache,
 		logger:     logger,
 	}
 }

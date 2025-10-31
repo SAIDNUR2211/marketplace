@@ -22,17 +22,14 @@ func GenerateToken(userID, ttl int, Role string, isRefresh bool) (string, error)
 		IsRefresh:      isRefresh,
 		Role:           Role,
 	}
-
 	if isRefresh {
 		claims.StandardClaims.ExpiresAt = time.Now().Add(time.Duration(ttl) * 24 * time.Hour).Unix()
 	} else {
 		claims.StandardClaims.ExpiresAt = time.Now().Add(time.Duration(ttl) * time.Minute).Unix()
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
-
 func ParseToken(tokenString string) (int, bool, string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -43,10 +40,8 @@ func ParseToken(tokenString string) (int, bool, string, error) {
 	if err != nil {
 		return 0, false, "", err
 	}
-
 	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		return claims.UserID, claims.IsRefresh, claims.Role, nil
 	}
-
 	return 0, false, "", fmt.Errorf("invalid token")
 }
